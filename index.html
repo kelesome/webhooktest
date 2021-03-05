@@ -1,0 +1,152 @@
+<template>
+    <view style="position: relative;height: 100%">
+        <topcom :back="true" :test="{test: '意见反馈'}"></topcom>
+        <view style="padding: 5px 10px 10px 10px;">
+            <view style="line-height: 30px;font-size: 16px">
+                反馈内容
+            </view>
+            <view>
+                <textarea placeholder="请输入你想反馈的内容" name="input" v-model="feedbackForm.feedbackContent"
+                          type="text" style="background-color: #fff;height: 100px;width: 100%;border-radius: 8px;box-sizing: border-box;padding: 5px"></textarea>
+            </view>
+        </view>
+        <view style="width: 100%;text-align: start;border-radius: 8px" class="margin-top">
+            <!--                        Modal 内容。-->
+            <!--                        这里上传图片-->
+            <view class="cu-form-group padding-top padding-bottom">
+                <view class="grid col-3 grid-square flex-sub">
+                    <view class="bg-img" v-for="(item,index2) in imgList" :key="index2" @tap="ViewImage"
+                          :data-url="imgList[index2]">
+                        <image :src="imgList[index2]" mode="aspectFill"></image>
+                        <view class="cu-tag bg-red" @tap.stop="DelImg" :data-index="index2">
+                            <text class='cuIcon-close'></text>
+                        </view>
+                    </view>
+                    <view class="solids" @tap="ChooseImage" v-if="imgList.length<1">
+                        <text class='cuIcon-cameraadd'></text>
+                    </view>
+                </view>
+            </view>
+        </view>
+        <!--        反馈内容为空-->
+        <view class="cu-modal" :class="modalName99=='showNo'?'show':''" @tap="hideModal99">
+            <view class="cu-dialog" @tap.stop="">
+                <view class="cu-dialog" @tap.stop="">
+                    <!--                   @tap.stop 这里防止点击穿透，直接hideModal3-->
+                    <view>
+                        <view class="cu-form-group justify-center">
+                            请输入你想反馈的内容
+                        </view>
+
+                    </view>
+                </view>
+            </view>
+        </view>
+<!--        反馈成功-->
+        <view class="cu-modal" :class="modalName66=='showNo'?'show':''" @tap="hideModal66">
+            <view class="cu-dialog" @tap.stop="">
+                <view class="cu-dialog" @tap.stop="">
+                    <!--                   @tap.stop 这里防止点击穿透，直接hideModal3-->
+                    <view>
+                        <view class="cu-form-group justify-center">
+                            意见反馈成功
+                        </view>
+
+                    </view>
+                </view>
+            </view>
+        </view>
+        <button class="cu-btn bg-red margin-tb-sm lg" style="width: 100%;position: fixed;bottom: 0" @tap="submit()">提交
+        </button>
+    </view>
+</template>
+
+<script>
+    import {wcpUpOss} from 'utils/wcpUpOss.js'
+    import topcom from "@/components/daxuepai-components/topcom"
+    import CommonInput from "../../../../components/form/common-input";
+
+    export default {
+        components: {
+            CommonInput,
+            topcom,
+        },
+        data() {
+            return {
+                modalName66: '',
+                modalName99: '',
+                feedbackForm: {
+                    feedbackContent: '',
+                    feedbackCreater: ''
+                },
+                studentsInfo: '',//学生信息
+                // feedbackText: '',//反馈的内容
+                // studentsId: '',//学生Id
+                imgList: []
+            }
+        },
+        methods: {
+            hideModal99(){
+                this.modalName99 = null
+            },
+            hideModal66(){
+                this.modalName66 = null
+            },
+            submit() {
+                // console.log(this.feedbackForm)
+                if(this.feedbackForm.feedbackContent){
+                    this.AUTOAPINEW.createFeedback(this.feedbackForm).then(res=>{
+                        console.log(res)
+                        this.feedbackForm.feedbackContent= ''
+                        this.imgList = []
+                        this.modalName66 = 'showNo'
+                    }).catch(() => {
+                        console.log("去登陆1234")
+                        return
+                    })
+                }else if(!this.feedbackForm.feedbackContent){
+                    this.modalName99 = 'showNo'
+                }
+            },
+            //上传图片三件套
+            ChooseImage() {
+                uni.chooseImage({
+                    count: 9, //默认9
+                    sizeType: ['compressed'], //可以指定是原图还是压缩图，默认二者都有
+                    sourceType: ['album'], //从相册选择
+                    success: (res) => {
+                        if (this.imgList.length != 0) {
+                            this.imgList = this.imgList.concat(res.tempFilePaths)
+                        } else {
+                            this.imgList = res.tempFilePaths
+                        }
+                    }
+                });
+            },
+            ViewImage(e) {
+                uni.previewImage({
+                    urls: this.imgList,
+                    current: e.currentTarget.dataset.url
+                });
+            },
+            DelImg(e) {
+                this.imgList.splice(e.currentTarget.dataset.index, 1)
+            },
+            //结束，【上传图片三件套】
+        },
+        onLoad() {
+            this.COMMONFUNCTION.getStorageByKey(this.STORAGECONFIG.studentsInfo).then(res => {
+                this.studentsInfo = res
+                this.feedbackForm.feedbackCreater = res.studentsId
+                // this.studentsId = res.studentsId
+                console.log(this.feedbackForm.feedbackCreater)
+            })
+        },
+        name: "feedback.vue",
+
+    }
+</script>
+
+<style scoped>
+
+</style>
